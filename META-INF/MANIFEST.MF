@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Dino-plugin
+Bundle-SymbolicName: dino-plugin; singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: dino_plugin.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ jars/diffutils-1.2.1.jar,
+ jars/gson-2.3.1.jar,
+ jars/commons-io-2.4/commons-io-2.4.jar,
+ src/dinoplugin/views/
