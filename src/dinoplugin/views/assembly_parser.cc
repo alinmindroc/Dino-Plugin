@@ -1,4 +1,3 @@
-#include <jni.h>
 #include <stdio.h>
 #include <map>
 #include <vector>
@@ -9,17 +8,20 @@
 #include "CodeObject.h"
 #include "InstructionDecoder.h"
 #include "CFG.h"
-#include "../../dinoplugin_views_JniProvider.h"
 
 using namespace std;
 using namespace Dyninst;
 using namespace ParseAPI;
 using namespace InstructionAPI;
 
-JNIEXPORT void JNICALL Java_dinoplugin_views_JniProvider_getAssemblyJni
-(JNIEnv * env, jobject obj, jstring jBinaryPath, jstring jJsonPath){
-	char *binaryPath = (char*) env->GetStringUTFChars(jBinaryPath, 0);
-	char *jsonPath = (char*) env->GetStringUTFChars(jJsonPath, 0);
+int main(int argc, char **argv){
+	if(argc != 3){
+		printf("Usage: %s <binary path> <path where to write json result>\n", argv[0]);
+		return -1;
+	}
+
+	char *binaryPath = argv[1];
+	char *jsonPath = argv[2];
 
 	stringstream outstream;
 	ofstream jsonStream;
@@ -40,7 +42,7 @@ JNIEXPORT void JNICALL Java_dinoplugin_views_JniProvider_getAssemblyJni
 		const char *error = "error: file can not be parsed";
 		jsonStream << error;
 		jsonStream.close();
-		return;
+		return - 1;
 	}
 
 	sts = new SymtabCodeSource(binaryPath);
@@ -55,7 +57,7 @@ JNIEXPORT void JNICALL Java_dinoplugin_views_JniProvider_getAssemblyJni
 		const char *error = "error: no functions in file";
 		jsonStream << error;
 		jsonStream.close();
-		return;
+		return - 1;
 	}
 
 	Address crtAddr;
@@ -140,7 +142,7 @@ JNIEXPORT void JNICALL Java_dinoplugin_views_JniProvider_getAssemblyJni
 		const char *error = "error: no functions parsed";
 		jsonStream << error;
 		jsonStream.close();
-		return;
+		return - 1;
 	}
 
 	resp.pop_back();

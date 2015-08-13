@@ -4,13 +4,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,39 +22,133 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import difflib.DiffRow;
 import difflib.DiffRowGenerator;
 
-/**
- * This sample class demonstrates how to plug-in a new workbench view. The view
- * shows data obtained from the model. The sample creates a dummy model on the
- * fly, but a real implementation would connect to the model available either in
- * this or another plug-in (e.g. the workspace). The view is connected to the
- * model using a content provider.
- * <p>
- * The view uses a label provider to define how model objects should be
- * presented in the view. Each view can present the same model objects using
- * different labels and icons, if needed. Alternatively, a single label provider
- * can be shared between views in order to ensure that objects of the same type
- * are presented in the same way everywhere.
- * <p>
- */
-
 public class DiffView extends ViewPart {
+	public static String functionCacheDir = "/tmp/cached-functions/";
+	public static String assemblyCacheDir = "/tmp/cached-assembly/";
+
+	public static String assemblyParserPath = "/home/alin/assembly_parser";
+	public static String functionParserPath = "/home/alin/function_parser";
+
+	public static Boolean isFunctionCached(String fileName) {
+		File cacheDir = new File(functionCacheDir);
+		String[] cachedBinaries = cacheDir.list();
+
+		if (cachedBinaries == null)
+			return false;
+
+		for (String s : cachedBinaries) {
+			if (s.compareTo(fileName) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static Boolean isAssemblyCached(String fileName) {
+		File cacheDir = new File(assemblyCacheDir);
+		String[] cachedBinaries = cacheDir.list();
+
+		if (cachedBinaries == null)
+			return false;
+
+		for (String s : cachedBinaries) {
+			if (s.compareTo(fileName) == 0) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static String getAssemblyParsedData(File file) throws IOException,
+			InterruptedException {
+		checkAndCreateCacheDirs();
+
+		if (isAssemblyCached(file.getName()) == false) {
+
+			String[] commands = new String[3];
+			commands[0] = assemblyParserPath;
+			commands[1] = file.getAbsolutePath();
+			commands[2] = assemblyCacheDir + file.getName();
+
+			Process p = Runtime.getRuntime().exec(commands);
+			p.waitFor();
+		}
+
+		return FileUtils.readFileToString(new File(assemblyCacheDir
+				+ file.getName()));
+	}
+
+	public static String getFunctionsRawJson(File file) {
+		try {
+			return FileUtils.readFileToString(new File(functionCacheDir
+					+ file.getName()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public static String[] getFunctionsParsedData(File file)
+			throws IOException, InterruptedException {
+		checkAndCreateCacheDirs();
+
+		// if the functions are not cached, parse them and save them to cache
+		if (isFunctionCached(file.getName()) == false) {
+			String[] commands = new String[3];
+			commands[0] = functionParserPath;
+			commands[1] = file.getAbsolutePath();
+			commands[2] = functionCacheDir + file.getName();
+
+			Process p = Runtime.getRuntime().exec(commands);
+			p.waitFor();
+		}
+
+		String source = FileUtils.readFileToString(new File(functionCacheDir
+				+ file.getName()));
+
+		Gson gson = new Gson();
+		java.lang.reflect.Type stringStringMap = new TypeToken<List<FuncModel>>() {
+		}.getType();
+
+		List<FuncModel> funcList = null;
+
+		try {
+			funcList = gson.fromJson(source, stringStringMap);
+		} catch (JsonSyntaxException e) {
+			return null;
+		}
+
+		ArrayList<String> res = new ArrayList<>();
+		for (FuncModel f : funcList) {
+			res.add(f.name);
+		}
+
+		String[] resArr = new String[res.size()];
+		res.toArray(resArr);
+		return resArr;
+	}
 
 	/**
 	 * The ID of the view as specified by the extension.
@@ -93,26 +191,17 @@ public class DiffView extends ViewPart {
 		public int index1, index2;
 	}
 
-	JButton button1 = new JButton("select file 1");
-	JButton button2 = new JButton("select file 2");
-
-	JList<String> list1 = new JList<String>();
-	JList<String> list2 = new JList<String>();
-
-	JList<IndexedDiffRow> listDiff1 = new JList<IndexedDiffRow>();
-	JList<IndexedDiffRow> listDiff2 = new JList<IndexedDiffRow>();
-
 	String selectedFunction1 = null;
 	String selectedFunction2 = null;
 
-	String selectedFile1 = null;
-	String selectedFile2 = null;
+	File selectedFile1 = null;
+	File selectedFile2 = null;
 
 	List<AssemblyLineModel> originalAssembly = null;
 	List<AssemblyLineModel> newAssembly = null;
 
-	List<Map<String, String>> funcsList1 = null;
-	List<Map<String, String>> funcsList2 = null;
+	List<Map<String, String>> assemblyList1 = null;
+	List<Map<String, String>> assemblyList2 = null;
 
 	private class DiffRendererLeft extends JLabel implements
 			ListCellRenderer<IndexedDiffRow> {
@@ -135,7 +224,7 @@ public class DiffView extends ViewPart {
 			String labelText = "";
 			labelText = String.format("%4d ", row.index1);
 
-			if (funcsList2 == null) {
+			if (assemblyList1 == null) {
 				// if only the left function is selected
 				labelText += row.getOldLine();
 				setBackground(grey);
@@ -255,17 +344,18 @@ public class DiffView extends ViewPart {
 	}
 
 	private void setDiff(List<AssemblyLineModel> assembly1,
-			List<AssemblyLineModel> assembly2) {
+			List<AssemblyLineModel> assembly2, JList<IndexedDiffRow> listDiff1,
+			JList<IndexedDiffRow> listDiff2) {
 		List<String> code1 = new ArrayList<>();
 		List<String> code2 = new ArrayList<>();
 
-		for (AssemblyLineModel l : assembly1) {
-			code1.add(l.name);
+		if (assembly1 != null) {
+			for (AssemblyLineModel l : assembly1) {
+				code1.add(l.name);
+			}
 		}
 
-		if (assembly2 == null) {
-			code2 = new ArrayList<>();
-		} else {
+		if (assembly2 != null) {
 			for (AssemblyLineModel l : assembly2) {
 				code2.add(l.name);
 			}
@@ -275,34 +365,51 @@ public class DiffView extends ViewPart {
 		listDiff2.setListData(getDiffData(code1, code2));
 	}
 
-	private void setFunctionAssembly() {
+	private void getAssemblyData() {
 		try {
 			Gson gson = new Gson();
 			java.lang.reflect.Type stringStringMap = new TypeToken<List<Map<String, String>>>() {
 			}.getType();
 
-			funcsList1 = gson.fromJson(JniProvider.getAssembly(selectedFile1),
-					stringStringMap);
+			String assembly1 = getAssemblyParsedData(selectedFile1);
+
+			try {
+				assemblyList1 = gson.fromJson(assembly1, stringStringMap);
+			} catch (JsonSyntaxException e) {
+				System.err.println(assembly1);
+			}
 
 			if (selectedFile2 == null) {
-				funcsList2 = null;
+				assemblyList2 = null;
 			} else {
-				funcsList2 = gson
-						.fromJson(JniProvider.getAssembly(selectedFile2),
-								stringStringMap);
+				String assembly2 = getAssemblyParsedData(selectedFile2);
+
+				try {
+					assemblyList2 = gson.fromJson(assembly2, stringStringMap);
+				} catch (JsonSyntaxException e) {
+					System.err.println(assembly2);
+				}
 			}
-		} catch (IOException e1) {
+		} catch (IOException | JsonSyntaxException | InterruptedException e1) {
 			e1.printStackTrace();
 		}
 	}
 
-	/*
-	 * The content provider class is responsible for providing objects to the
-	 * view. It can wrap existing objects in adapters or simply return objects
-	 * as-is. These objects may be sensitive to the current input of the view,
-	 * or ignore it and always show the same content (like Task List, for
-	 * example).
-	 */
+	public static void checkAndCreateCacheDirs() {
+		File f = new File(functionCacheDir);
+		if (f.exists() == false) {
+			if (f.mkdir() == false) {
+				System.out.println(f + " could not be created");
+			}
+		}
+
+		f = new File(assemblyCacheDir);
+		if (f.exists() == false) {
+			if (f.mkdir() == false) {
+				System.out.println(f + " could not be created");
+			}
+		}
+	}
 
 	/**
 	 * The constructor.
@@ -318,9 +425,26 @@ public class DiffView extends ViewPart {
 		Composite composite = new Composite(parent, SWT.EMBEDDED
 				| SWT.NO_BACKGROUND);
 		Frame frame = SWT_AWT.new_Frame(composite);
+		final JButton button1 = new JButton("select file 1");
+		final JButton button2 = new JButton("select file 2");
+
+		final JLabel label1 = new JLabel();
+		final JLabel label2 = new JLabel();
+
+		final JList<IndexedDiffRow> diffJList1 = new JList<IndexedDiffRow>();
+		final JList<IndexedDiffRow> diffJList2 = new JList<IndexedDiffRow>();
+
+		final JList<String> funcJList1 = new JList<String>();
+		final JList<String> funcJList2 = new JList<String>();
 
 		button1.setEnabled(true);
 		button2.setEnabled(false);
+
+		funcJList1.setLayoutOrientation(JList.VERTICAL);
+		funcJList2.setLayoutOrientation(JList.VERTICAL);
+
+		funcJList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		funcJList2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		button1.addActionListener(new ActionListener() {
 			@Override
@@ -328,52 +452,52 @@ public class DiffView extends ViewPart {
 				JFileChooser fileChooser = new JFileChooser();
 				int status = fileChooser.showOpenDialog(null);
 				if (status == JFileChooser.APPROVE_OPTION) {
-					File selectedFile = fileChooser.getSelectedFile();
+					selectedFile1 = fileChooser.getSelectedFile();
 					try {
-						selectedFile1 = selectedFile.getName();
-						list1.setListData(JniProvider.getFunctions(
-								selectedFile1, "name", "ascending"));
-						button1.setText("(selected:" + selectedFile1 + ")");
-						button2.setEnabled(true);
-						setFunctionAssembly();
-					} catch (IOException e1) {
+						String[] data = getFunctionsParsedData(selectedFile1);
+						if (data != null) {
+							funcJList1.setListData(data);
+							label1.setText(selectedFile1.getAbsolutePath());
+							button2.setEnabled(true);
+							getAssemblyData();
+						} else {
+							JOptionPane.showMessageDialog(null,
+									getFunctionsRawJson(selectedFile1));
+						}
+					} catch (IOException | InterruptedException e1) {
+						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-				} else if (status == JFileChooser.CANCEL_OPTION) {
-					System.out.println("canceled");
 				}
 			}
 		});
 
 		button2.addActionListener(new ActionListener() {
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fileChooser = new JFileChooser();
 				int status = fileChooser.showOpenDialog(null);
 				if (status == JFileChooser.APPROVE_OPTION) {
-					File selectedFile = fileChooser.getSelectedFile();
+					selectedFile2 = fileChooser.getSelectedFile();
 					try {
-						selectedFile2 = selectedFile.getName();
-						list2.setListData(JniProvider.getFunctions(
-								selectedFile2, "name", "ascending"));
-						button2.setText("(selected:" + selectedFile2 + ")");
-						setFunctionAssembly();
-					} catch (IOException e1) {
+						String[] data = getFunctionsParsedData(selectedFile2);
+						if (data != null) {
+							funcJList2.setListData(data);
+							label2.setText(selectedFile2.getAbsolutePath());
+							getAssemblyData();
+						} else {
+							JOptionPane.showMessageDialog(null,
+									getFunctionsRawJson(selectedFile2));
+						}
+					} catch (IOException | InterruptedException e1) {
 						e1.printStackTrace();
 					}
-				} else if (status == JFileChooser.CANCEL_OPTION) {
-					System.out.println("canceled");
 				}
 			}
 		});
 
-		list1.setLayoutOrientation(JList.VERTICAL);
-		list2.setLayoutOrientation(JList.VERTICAL);
-
-		list1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-		list1.addListSelectionListener(new ListSelectionListener() {
+		funcJList1.addListSelectionListener(new ListSelectionListener() {
 
 			@Override
 			public void valueChanged(ListSelectionEvent evt) {
@@ -381,7 +505,7 @@ public class DiffView extends ViewPart {
 				String functionName = (String) list.getSelectedValue();
 				String code = "";
 
-				for (Map<String, String> i : funcsList1) {
+				for (Map<String, String> i : assemblyList1) {
 					if (i.get(functionName) != null) {
 						code = i.get(functionName);
 						break;
@@ -394,16 +518,11 @@ public class DiffView extends ViewPart {
 				}.getType();
 				originalAssembly = gson.fromJson(code, stringArray);
 
-				// System.out.println("old: " + functionName
-				// + originalAssembly);
-				// System.out.println("new: " + newAssembly);
-				// System.out.println();
-
-				setDiff(originalAssembly, newAssembly);
+				setDiff(originalAssembly, newAssembly, diffJList1, diffJList2);
 			}
 		});
 
-		list2.addListSelectionListener(new ListSelectionListener() {
+		funcJList2.addListSelectionListener(new ListSelectionListener() {
 
 			@Override
 			public void valueChanged(ListSelectionEvent evt) {
@@ -411,7 +530,7 @@ public class DiffView extends ViewPart {
 				String functionName = list.getSelectedValue();
 				String code = "";
 
-				for (Map<String, String> i : funcsList2) {
+				for (Map<String, String> i : assemblyList2) {
 					if (i.get(functionName) != null) {
 						code = i.get(functionName);
 						break;
@@ -424,38 +543,57 @@ public class DiffView extends ViewPart {
 				}.getType();
 				newAssembly = gson.fromJson(code, stringArray);
 
-				// System.out.println("old: " + originalAssembly);
-				// System.out.println("new: " + functionName + newAssembly);
-				// System.out.println();
-
-				setDiff(originalAssembly, newAssembly);
+				setDiff(originalAssembly, newAssembly, diffJList1, diffJList2);
 			}
 		});
 
-		listDiff1.setCellRenderer(new DiffRendererLeft());
-		listDiff2.setCellRenderer(new DiffRendererRight());
+		diffJList1.setCellRenderer(new DiffRendererLeft());
+		diffJList2.setCellRenderer(new DiffRendererRight());
 
-		frame.setLayout(new GridLayout(0, 2));
-		frame.setTitle("Quit button");
-		frame.setSize(300, 200);
+		frame.setLayout(new GridBagLayout());
+		frame.setTitle("Diff View");
 		frame.setLocationRelativeTo(null);
 
-		frame.add(button1);
-		frame.add(button2);
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.gridx = 0;
+		c.weightx = 1;
+		c.gridy = 0;
 
-		frame.add(new JScrollPane(list1));
-		frame.add(new JScrollPane(list2));
+		frame.add(button1, c);
+		c.gridx = 1;
+		frame.add(button2, c);
 
-		JScrollPane scrollPane1 = new JScrollPane(listDiff1);
-		JScrollPane scrollPane2 = new JScrollPane(listDiff2);
+		c.gridy = 1;
+		c.gridx = 0;
+		frame.add(label1, c);
+		c.gridx = 1;
+		frame.add(label2, c);
+
+		c.gridy = 2;
+		c.gridx = 0;
+		c.weighty = 0.2;
+
+		frame.add(new JScrollPane(funcJList1), c);
+		c.gridx = 1;
+		frame.add(new JScrollPane(funcJList2), c);
+
+		JScrollPane scrollPane1 = new JScrollPane(diffJList1);
+		JScrollPane scrollPane2 = new JScrollPane(diffJList2);
 
 		scrollPane1.getVerticalScrollBar()
 				.setPreferredSize(new Dimension(0, 0));
 		scrollPane2.getVerticalScrollBar().setModel(
 				scrollPane1.getVerticalScrollBar().getModel());
 
-		frame.add(scrollPane1);
-		frame.add(scrollPane2);
+		c.gridy = 3;
+		c.gridx = 0;
+		c.weighty = 0.8;
+
+		frame.add(scrollPane1, c);
+
+		c.gridx = 1;
+		frame.add(scrollPane2, c);
 	}
 
 	/**
