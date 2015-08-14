@@ -43,11 +43,11 @@ import difflib.DiffRow;
 import difflib.DiffRowGenerator;
 
 public class DiffView extends ViewPart {
-	public static String functionCacheDir = "/tmp/cached-functions/";
-	public static String assemblyCacheDir = "/tmp/cached-assembly/";
+	public static String functionCacheDir = "/tmp/dino/cached-functions/";
+	public static String assemblyCacheDir = "/tmp/dino/cached-assembly/";
 
-	public static String assemblyParserPath = "/home/alin/assembly_parser";
-	public static String functionParserPath = "/home/alin/function_parser";
+	public static String assemblyParserPath = "/tmp/dino/assembly_parser";
+	public static String functionParserPath = "/tmp/dino/function_parser";
 
 	public static Boolean isFunctionCached(String fileName) {
 		File cacheDir = new File(functionCacheDir);
@@ -80,8 +80,7 @@ public class DiffView extends ViewPart {
 		return false;
 	}
 
-	public static String getAssemblyParsedData(File file) throws IOException,
-			InterruptedException {
+	public static String getAssemblyParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
 
 		if (isAssemblyCached(file.getName()) == false) {
@@ -91,8 +90,18 @@ public class DiffView extends ViewPart {
 			commands[1] = file.getAbsolutePath();
 			commands[2] = assemblyCacheDir + file.getName();
 
-			Process p = Runtime.getRuntime().exec(commands);
-			p.waitFor();
+			Process p = null;
+			try {
+				p = Runtime.getRuntime().exec(commands);
+				p.waitFor();
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null,
+						"Could not invoke parser at " + assemblyParserPath);
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return FileUtils.readFileToString(new File(assemblyCacheDir
@@ -110,8 +119,7 @@ public class DiffView extends ViewPart {
 		return null;
 	}
 
-	public static String[] getFunctionsParsedData(File file)
-			throws IOException, InterruptedException {
+	public static String[] getFunctionsParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
 
 		// if the functions are not cached, parse them and save them to cache
@@ -121,8 +129,17 @@ public class DiffView extends ViewPart {
 			commands[1] = file.getAbsolutePath();
 			commands[2] = functionCacheDir + file.getName();
 
-			Process p = Runtime.getRuntime().exec(commands);
-			p.waitFor();
+			Process p;
+			try {
+				p = Runtime.getRuntime().exec(commands);
+				p.waitFor();
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null,
+						"Could not invoke parser at " + functionParserPath);
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 
 		String source = FileUtils.readFileToString(new File(functionCacheDir
@@ -390,7 +407,7 @@ public class DiffView extends ViewPart {
 					System.err.println(assembly2);
 				}
 			}
-		} catch (IOException | JsonSyntaxException | InterruptedException e1) {
+		} catch (IOException | JsonSyntaxException e1) {
 			e1.printStackTrace();
 		}
 	}
@@ -467,7 +484,7 @@ public class DiffView extends ViewPart {
 							JOptionPane.showMessageDialog(null,
 									getFunctionsRawJson(selectedFile1));
 						}
-					} catch (IOException | InterruptedException e1) {
+					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
@@ -493,7 +510,7 @@ public class DiffView extends ViewPart {
 							JOptionPane.showMessageDialog(null,
 									getFunctionsRawJson(selectedFile2));
 						}
-					} catch (IOException | InterruptedException e1) {
+					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
 				}

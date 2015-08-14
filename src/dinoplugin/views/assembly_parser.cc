@@ -153,4 +153,6 @@ int main(int argc, char **argv){
 
 	jsonStream << resp;
 	jsonStream.close();
+
+	return 0;
 }

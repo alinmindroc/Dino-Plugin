@@ -40,7 +40,7 @@ import com.google.gson.reflect.TypeToken;
 
 public class SourceView extends ViewPart {
 
-	public static String lineParserPath = "/home/alin/line_parser";
+	public static String lineParserPath = "/tmp/dino/line_parser";
 
 	List<Color> colorArray = new ArrayList<Color>();
 
@@ -70,7 +70,8 @@ public class SourceView extends ViewPart {
 		try {
 			p = Runtime.getRuntime().exec(commands);
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
+			JOptionPane.showMessageDialog(null, "Could not invoke parser at "
+					+ lineParserPath);
 			e1.printStackTrace();
 		}
 
