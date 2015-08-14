@@ -1,0 +1,10 @@
+create new plugin project with view
+copy diffview code in the first view
+go to plugin.xml->runtime and add commons.io, diffutils and gson jars to classpath
+add new view in plugin.xml (two <view></view> bodies)
+export plugin from File > Export... > Plug-in Development > Deployable plug-ins and fragments
+
+
+to install: copy the jar generated from the export step into the dropins folder of the eclipse instalation, usually in /usr/share/eclipse/dropins/jdt/plugins
+	    make: g++ > 4.8 needed
+
