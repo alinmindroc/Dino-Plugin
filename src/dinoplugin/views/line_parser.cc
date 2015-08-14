@@ -38,7 +38,7 @@ int main(int argc, char **argv){
 		obj->getAllModules(v);
 
 		out << "No module with name \"" << sourceFileStr << "\" found." << endl;
-		out << "Original source file names: " << endl;
+		out << "Original source file names: " << endl << endl;
 
 		for(int i=0; i<v.size(); i++)
 			out << v[i]->fullName() << endl;

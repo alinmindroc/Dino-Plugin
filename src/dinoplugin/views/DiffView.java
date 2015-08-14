@@ -434,6 +434,9 @@ public class DiffView extends ViewPart {
 		final JList<IndexedDiffRow> diffJList1 = new JList<IndexedDiffRow>();
 		final JList<IndexedDiffRow> diffJList2 = new JList<IndexedDiffRow>();
 
+		diffJList1.setDoubleBuffered(true);
+		diffJList2.setDoubleBuffered(true);
+
 		final JList<String> funcJList1 = new JList<String>();
 		final JList<String> funcJList2 = new JList<String>();
 

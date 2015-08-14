@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -129,7 +130,10 @@ public class SourceView extends ViewPart {
 						.get(row.lineNumber % colorArray.size()));
 			}
 
-			setText(row.content);
+			String labelText = "";
+			labelText = String.format("%4d %s", index + 1, row.content);
+
+			setText(labelText);
 
 			return this;
 		}
@@ -150,18 +154,19 @@ public class SourceView extends ViewPart {
 			f = f.deriveFont(Font.PLAIN);
 			setFont(f);
 
+			int searchIndex = index + 1;
+
 			if (isSelected) {
 				setBackground(Color.ORANGE);
 				f = this.getFont();
 				f = f.deriveFont(Font.BOLD);
 				setFont(f);
 			} else {
-				index++;
-
 				setBackground(Color.white);
 				for (AssemblyLine l : assemblyData) {
-					if (l.lineNumber == index) {
-						setBackground(colorArray.get(index % colorArray.size()));
+					if (l.lineNumber == searchIndex) {
+						setBackground(colorArray.get(searchIndex
+								% colorArray.size()));
 					}
 				}
 			}
@@ -169,7 +174,10 @@ public class SourceView extends ViewPart {
 			if (row.length() == 0)
 				row = " ";
 
-			setText(row);
+			String labelText = "";
+			labelText = String.format("%4d %s", index + 1, row);
+
+			setText(labelText);
 
 			return this;
 		}
@@ -206,6 +214,11 @@ public class SourceView extends ViewPart {
 
 		final JList<AssemblyLine> assemblyList = new JList<AssemblyLine>();
 		final JList<String> codeList = new JList<String>();
+
+		// remove list flickering when quickly changing selection
+		assemblyList.setDoubleBuffered(true);
+		codeList.setDoubleBuffered(true);
+
 		JScrollPane scrollPaneAssembly;
 		JScrollPane scrollPaneCode;
 
@@ -281,7 +294,8 @@ public class SourceView extends ViewPart {
 								sourceCode.add(line);
 							}
 
-						} catch (Exception e) {
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
 
 						assemblyList.clearSelection();
@@ -309,7 +323,6 @@ public class SourceView extends ViewPart {
 				int sourceLine = codeList.getSelectedIndex() + 1;
 
 				ArrayList<Integer> asmList = new ArrayList<Integer>();
-				int c = 0;
 
 				for (int i = 0; i < assemblyData.length; i++) {
 					if (assemblyData[i].lineNumber == sourceLine) {
@@ -317,9 +330,9 @@ public class SourceView extends ViewPart {
 					}
 				}
 
-				assemblyList.setSelectedIndices(getPrimitiveArray(asmList));
-
 				if (asmList.size() > 0) {
+					assemblyList.setSelectedIndices(getPrimitiveArray(asmList));
+
 					int minIndex = assemblyList.getMinSelectionIndex();
 					int maxIndex = assemblyList.getMaxSelectionIndex();
 
@@ -328,8 +341,13 @@ public class SourceView extends ViewPart {
 					if (maxIndex < assemblyData.length - 1)
 						maxIndex++;
 
-					assemblyList.scrollRectToVisible(assemblyList
-							.getCellBounds(minIndex, maxIndex));
+					Rectangle scrollRect = assemblyList.getCellBounds(minIndex,
+							maxIndex);
+
+					if (scrollRect != null)
+						assemblyList.scrollRectToVisible(scrollRect);
+					else
+						assemblyList.clearSelection();
 				}
 			}
 		});
@@ -349,8 +367,9 @@ public class SourceView extends ViewPart {
 						}
 					}
 
-					codeList.setSelectedIndex(selectedSourceLine - 1);
 					if (asmLinesList.size() > 0) {
+						codeList.setSelectedIndex(selectedSourceLine - 1);
+
 						int minIndex = selectedSourceLine - 1;
 						int maxIndex = selectedSourceLine - 1;
 
@@ -359,8 +378,13 @@ public class SourceView extends ViewPart {
 						if (maxIndex < sourceCodeData.length - 1)
 							maxIndex++;
 
-						codeList.scrollRectToVisible(codeList.getCellBounds(
-								minIndex, maxIndex));
+						Rectangle scrollRect = codeList.getCellBounds(minIndex,
+								maxIndex);
+
+						if (scrollRect != null)
+							codeList.scrollRectToVisible(scrollRect);
+						else
+							codeList.clearSelection();
 					}
 				}
 			}
