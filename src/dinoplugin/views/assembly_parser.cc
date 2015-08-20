@@ -97,9 +97,8 @@ int main(int argc, char **argv){
 			outstream << endl << "{\\\"address\\\":\\\"" << hex << crtAddr << "\\\", ";
 			outstream << "\\\"name\\\": \\\"" << instr->format() << "\\\"";
 
-			//pentru instructiuni de tip call afisam adresa destinatie
+			//if the current instruction is a call, decode its destination
 			if(instr->getCategory() == 0 && instr->size() == 5){
-				//aflam target-ul control flow-ului
 				Expression::Ptr expr = instr->getControlFlowTarget();
 				if(expr){
 					std::vector<Expression::Ptr> children1;
@@ -116,7 +115,7 @@ int main(int argc, char **argv){
 
 						//get the destination function
 						Function *dest = co->findFuncByEntry(f->region(), expr->eval().convert<unsigned long int>());
-						//pt cazurile in care al doilea node al AST-ului nu era RIP
+
 						if(dest){
 							outstream << ", \\\"destName\\\": \\\"" << dest->name() << "\\\"";
 							outstream << ", \\\"destAddr\\\": \\\"" << hex << dest->addr() << "\\\"";

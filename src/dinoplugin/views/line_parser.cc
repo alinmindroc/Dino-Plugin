@@ -28,6 +28,8 @@ int main(int argc, char **argv){
 	Symtab *obj = NULL;
 	Symtab::openFile(obj, executableFile);
 
+	//the main module of the binary has the same name of the source file from
+	//which the binary has been compiled
 	Module *mod;
 	obj->findModuleByName(mod, sourceFile);
 
@@ -65,7 +67,8 @@ int main(int argc, char **argv){
 
 	vector<pair<int, string>> lineVector;
 
-	//print every line
+	//for every line information structure, go into its address range and decode
+	//its corresponding instructions
 	LineInformation::const_iterator iter;
 	for(iter = info->begin(); iter != info->end(); iter++){
 		const std::pair<Offset, Offset> addrRange = iter->first;
@@ -73,7 +76,10 @@ int main(int argc, char **argv){
 
 		Address start = addrRange.first;
 		Address end = addrRange.second;
+
 		int lineNumber = lt.second;
+
+		//for this address range, get all the instructions
 		while(start <= end){
 			Instruction::Ptr instr = decoder.decode((const unsigned char *)sts->getPtrToInstruction(start));
 			start += instr->size();
@@ -84,6 +90,8 @@ int main(int argc, char **argv){
 	stringstream out;
 
 	out << "[" << endl;
+
+	//output every pair of line number - instruction as JSON
 	for(vector<pair<int, string>>::iterator it=lineVector.begin(); it!= lineVector.end(); it++){
 		out << "{\"content\":\"" << it->second << "\",\"lineNumber\":" << it->first << "}," << endl;
 	}
