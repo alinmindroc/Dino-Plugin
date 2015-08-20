@@ -1,4 +1,4 @@
-package dinoplugin.views;
+package dinopluginv2.views;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -39,15 +39,11 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 public class SourceView extends ViewPart {
-
 	public static String lineParserPath = "/tmp/dino/line_parser";
-
-	List<Color> colorArray = new ArrayList<Color>();
-
-	AssemblyLine[] assemblyData;
-	String[] sourceCodeData;
-
-	ArrayList<Integer> assemblySelectedIndices = new ArrayList<>();
+	private List<Color> colorArray = new ArrayList<Color>();
+	private AssemblyLine[] assemblyData;
+	private String[] sourceCodeData;
+	private ArrayList<Integer> assemblySelectedIndices = new ArrayList<>();
 
 	class AssemblyLine {
 		public String content;
@@ -59,6 +55,15 @@ public class SourceView extends ViewPart {
 		}
 	}
 
+	/**
+	 * 
+	 * Get the assembly code corresponding to the module with the name of the
+	 * source file in the executable from binaryPath in raw JSON format
+	 * 
+	 * @param binaryPath
+	 * @param sourcePath
+	 * @return
+	 */
 	public String getAssemblyJson(String binaryPath, String sourcePath) {
 
 		String[] commands = new String[3];
@@ -91,6 +96,15 @@ public class SourceView extends ViewPart {
 		return source;
 	}
 
+	/**
+	 * 
+	 * Get the assembly code corresponding to the module with the name of the
+	 * source file in the executable from binaryPath as an array of AssemblyLines
+	 * 
+	 * @param binaryPath
+	 * @param sourcePath
+	 * @return
+	 */
 	public AssemblyLine[] getLines(String binaryPath, String sourcePath) {
 		String source = getAssemblyJson(binaryPath, sourcePath);
 
@@ -184,9 +198,16 @@ public class SourceView extends ViewPart {
 		}
 	}
 
-	String executablePath;
-	String sourceFilePath;
+	private String executablePath;
+	private String sourceFilePath;
 
+	/**
+	 * 
+	 * returns a primitive array of ints from an arraylist of Integers
+	 * 
+	 * @param arrayList
+	 * @return
+	 */
 	private int[] getPrimitiveArray(ArrayList<Integer> arrayList) {
 		int[] result = new int[arrayList.size()];
 		int c = 0;
@@ -195,7 +216,11 @@ public class SourceView extends ViewPart {
 		}
 		return result;
 	}
-
+	
+	/**
+	 * This is a callback that will allow us to create the viewer and initialize
+	 * it.
+	 */
 	@Override
 	public void createPartControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.EMBEDDED
@@ -428,5 +453,4 @@ public class SourceView extends ViewPart {
 	@Override
 	public void setFocus() {
 	}
-
 }

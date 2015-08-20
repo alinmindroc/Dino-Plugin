@@ -1,4 +1,4 @@
-package dinoplugin.views;
+package dinopluginv2.views;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -45,10 +45,16 @@ import difflib.DiffRowGenerator;
 public class DiffView extends ViewPart {
 	public static String functionCacheDir = "/tmp/dino/cached-functions/";
 	public static String assemblyCacheDir = "/tmp/dino/cached-assembly/";
-
 	public static String assemblyParserPath = "/tmp/dino/assembly_parser";
 	public static String functionParserPath = "/tmp/dino/function_parser";
 
+	/**
+	 * check if the file received as parameter was already parsed and its
+	 * functions are cached
+	 * 
+	 * @param fileName
+	 * @return
+	 */
 	public static Boolean isFunctionCached(String fileName) {
 		File cacheDir = new File(functionCacheDir);
 		String[] cachedBinaries = cacheDir.list();
@@ -64,6 +70,13 @@ public class DiffView extends ViewPart {
 		return false;
 	}
 
+	/**
+	 * check if the file received as parameter was already parsed and its
+	 * assembly is cached
+	 * 
+	 * @param fileName
+	 * @return
+	 */
 	public static Boolean isAssemblyCached(String fileName) {
 		File cacheDir = new File(assemblyCacheDir);
 		String[] cachedBinaries = cacheDir.list();
@@ -80,6 +93,14 @@ public class DiffView extends ViewPart {
 		return false;
 	}
 
+	/**
+	 * Parse an executable file and save the assembly code in a file in the
+	 * assembly cache path
+	 * 
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
 	public static String getAssemblyParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
 
@@ -108,6 +129,12 @@ public class DiffView extends ViewPart {
 				+ file.getName()));
 	}
 
+	/**
+	 * parse an executable file and get the list of functions in raw json format
+	 * 
+	 * @param file
+	 * @return
+	 */
 	public static String getFunctionsRawJson(File file) {
 		try {
 			return FileUtils.readFileToString(new File(functionCacheDir
@@ -119,6 +146,13 @@ public class DiffView extends ViewPart {
 		return null;
 	}
 
+	/**
+	 * parse an executable file and get the list of function names in String
+	 * array format
+	 * 
+	 * @param file
+	 * @return
+	 */
 	public static String[] getFunctionsParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
 
@@ -167,12 +201,7 @@ public class DiffView extends ViewPart {
 		return resArr;
 	}
 
-	/**
-	 * The ID of the view as specified by the extension.
-	 */
-	public static final String ID = "dinoplugin.views.DiffView";
-
-	class FuncModel {
+	private class FuncModel {
 		public String address;
 		public String name;
 		public long size;
@@ -182,17 +211,21 @@ public class DiffView extends ViewPart {
 		}
 	}
 
-	class AssemblyLineModel {
+	private class AssemblyLineModel {
 		public String address;
 		public String name;
-		public String destName;
-		public String destAddr;
 
 		public String toString() {
 			return address + ": " + name;
 		}
 	}
 
+	/**
+	 * 
+	 * Represents a diff row in containing the indexes of the row in the left
+	 * and right panels
+	 * 
+	 */
 	private class IndexedDiffRow extends DiffRow {
 		public IndexedDiffRow(Tag tag, String oldLine, String newLine) {
 			super(tag, oldLine, newLine);
@@ -208,17 +241,22 @@ public class DiffView extends ViewPart {
 		public int index1, index2;
 	}
 
-	String selectedFunction1 = null;
-	String selectedFunction2 = null;
+	private String selectedFunction1 = null;
+	private String selectedFunction2 = null;
 
-	File selectedFile1 = null;
-	File selectedFile2 = null;
+	private File selectedFile1 = null;
+	private File selectedFile2 = null;
 
-	List<AssemblyLineModel> originalAssembly = null;
-	List<AssemblyLineModel> newAssembly = null;
+	private List<AssemblyLineModel> originalAssembly = null;
+	private List<AssemblyLineModel> newAssembly = null;
 
-	List<Map<String, String>> assemblyList1 = null;
-	List<Map<String, String>> assemblyList2 = null;
+	private List<Map<String, String>> assemblyList1 = null;
+	private List<Map<String, String>> assemblyList2 = null;
+
+	private Color green = new Color(149, 234, 149);
+	private Color yellow = new Color(250, 217, 135);
+	private Color red = new Color(239, 153, 153);
+	private Color grey = new Color(220, 220, 219);
 
 	private class DiffRendererLeft extends JLabel implements
 			ListCellRenderer<IndexedDiffRow> {
@@ -226,11 +264,6 @@ public class DiffView extends ViewPart {
 		public DiffRendererLeft() {
 			setOpaque(true);
 		}
-
-		Color green = new Color(149, 234, 149);
-		Color yellow = new Color(250, 217, 135);
-		Color red = new Color(239, 153, 153);
-		Color grey = new Color(220, 220, 219);
 
 		@Override
 		public Component getListCellRendererComponent(
@@ -277,11 +310,6 @@ public class DiffView extends ViewPart {
 			setOpaque(true);
 		}
 
-		Color green = new Color(149, 234, 149);
-		Color yellow = new Color(250, 217, 135);
-		Color red = new Color(239, 153, 153);
-		Color grey = new Color(220, 220, 219);
-
 		@Override
 		public Component getListCellRendererComponent(
 				JList<? extends IndexedDiffRow> list, IndexedDiffRow row,
@@ -316,6 +344,16 @@ public class DiffView extends ViewPart {
 		}
 	}
 
+	/**
+	 * 
+	 * Get array of diff rows, representing the diff of two lists
+	 * of strings. A line can be matched with another line in the other list
+	 * through an operation of add, remove, change or delete.
+	 * 
+	 * @param originalList
+	 * @param revisedList
+	 * @return
+	 */
 	private IndexedDiffRow[] getDiffData(List<String> originalList,
 			List<String> revisedList) {
 
@@ -360,6 +398,16 @@ public class DiffView extends ViewPart {
 		return result;
 	}
 
+	/**
+	 * 
+	 * set data in the assembly lists after the user has selected
+	 * the functions to diff
+	 * 
+	 * @param assembly1
+	 * @param assembly2
+	 * @param listDiff1
+	 * @param listDiff2
+	 */
 	private void setDiff(List<AssemblyLineModel> assembly1,
 			List<AssemblyLineModel> assembly2, JList<IndexedDiffRow> listDiff1,
 			JList<IndexedDiffRow> listDiff2) {
@@ -426,12 +474,6 @@ public class DiffView extends ViewPart {
 				System.out.println(f + " could not be created");
 			}
 		}
-	}
-
-	/**
-	 * The constructor.
-	 */
-	public DiffView() {
 	}
 
 	/**
@@ -616,9 +658,7 @@ public class DiffView extends ViewPart {
 		frame.add(scrollPane2, c);
 	}
 
-	/**
-	 * Passing the focus request to the viewer's control.
-	 */
+	@Override
 	public void setFocus() {
 	}
 }
