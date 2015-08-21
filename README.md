@@ -6,13 +6,13 @@ The plugin offers two views which can be used to analyse executable files:
 
 1. Diff View:  
 You can select two executable files, browse through their functions and get a
-diff between the contents of any two functions.
+visual diff between the assembly lines of any two functions. Based on https://code.google.com/p/java-diff-utils/.
 
 2. Source View:  
-Select an executable file (compiled with debug information) and it's source code
+Select an executable file (compiled with debug information) and its source code
 file and you are presented with a mapping of source code->assembly code.  
 This way, you can easily see how the compiler transforms a line of source code into a
-block of many assembly instructions.
+block of many assembly instructions. Inspiration for this came from https://github.com/mattgodbolt/gcc-explorer.
 
 The UI is done using Swing.
 
@@ -67,6 +67,23 @@ Diff View and the Source View.
 If the Dino Category doesn't appear, try restarting eclipse from a
 console with the -clean argument.
 
+####Future development notes:
+* The plugin uses C++ executables for accessing the Dyninst framework, unlike the web app which does this using JNI.
+The main reason for this is some nitty-gritty behaviour of JNI that caches big data structures and, as a result of
+this, there was no possibility of changing an executable and reloading it into the plugin; it would have shown the
+same result.
+* The ```/tmp/dino``` directory used for storing the executables and cached results is not the best chosen, as it
+is cleared at every machine startup.
+* Possible improvements would be:
+  * Adding sorting and search functionality in the function table
+  * Show functions in a tree-like structure in the diff view, with callee functions branching from callers.
+  * Inside the C++ files: don't create JSON content manually, instead save the results in an array and then output it 
+using a JSON serializer 
+  * Use JNI in order to call Dyninst methods. Current solution with stand-alone executables can fail if the directory containing the executables is removed (requires re-compiling). Also, feels kinda hackish.
+  * Contribute to Dyninst; some features which would have been nice for this project would have been:
+    * platform-independent parsing (i.e. right now you have to recompile the whole Dyninst library in order to parse Windows executables on Linux)
+    * support for AVX instructions
+    * better documentation
 
 
 
