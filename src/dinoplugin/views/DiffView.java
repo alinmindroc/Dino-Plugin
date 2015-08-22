@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -492,9 +493,9 @@ public class DiffView extends ViewPart {
 		button1.setEnabled(true);
 		button2.setEnabled(false);
 		refreshButton.setEnabled(true);
-		
-		refreshButton.setToolTipText("Delete the cache directories");
-		
+
+		refreshButton.setToolTipText("Empty the cache directories and clear the current data");
+
 		final JLabel label1 = new JLabel();
 		final JLabel label2 = new JLabel();
 
@@ -563,14 +564,25 @@ public class DiffView extends ViewPart {
 				}
 			}
 		});
-		
+
 		refreshButton.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					FileUtils.cleanDirectory(new File(functionCacheDir));
 					FileUtils.cleanDirectory(new File(assemblyCacheDir));
+
+					funcJList1.setListData(new String[0]);
+					funcJList2.setListData(new String[0]);
+
+					diffJList1.setListData(new IndexedDiffRow[0]);
+					diffJList2.setListData(new IndexedDiffRow[0]);
+
+					label1.setText("");
+					label2.setText("");
+					
+					button2.setEnabled(false);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -653,7 +665,7 @@ public class DiffView extends ViewPart {
 		refreshPanel.add(refreshButton, c2);
 
 		frame.add(refreshPanel, c);
-		
+
 		c.gridy = 1;
 		c.gridx = 0;
 		frame.add(label1, c);
