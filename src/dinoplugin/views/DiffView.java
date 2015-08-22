@@ -23,6 +23,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
@@ -346,9 +347,9 @@ public class DiffView extends ViewPart {
 
 	/**
 	 * 
-	 * Get array of diff rows, representing the diff of two lists
-	 * of strings. A line can be matched with another line in the other list
-	 * through an operation of add, remove, change or delete.
+	 * Get array of diff rows, representing the diff of two lists of strings. A
+	 * line can be matched with another line in the other list through an
+	 * operation of add, remove, change or delete.
 	 * 
 	 * @param originalList
 	 * @param revisedList
@@ -400,8 +401,8 @@ public class DiffView extends ViewPart {
 
 	/**
 	 * 
-	 * set data in the assembly lists after the user has selected
-	 * the functions to diff
+	 * set data in the assembly lists after the user has selected the functions
+	 * to diff
 	 * 
 	 * @param assembly1
 	 * @param assembly2
@@ -486,7 +487,14 @@ public class DiffView extends ViewPart {
 		Frame frame = SWT_AWT.new_Frame(composite);
 		final JButton button1 = new JButton("select file 1");
 		final JButton button2 = new JButton("select file 2");
+		final JButton refreshButton = new JButton("refresh");
 
+		button1.setEnabled(true);
+		button2.setEnabled(false);
+		refreshButton.setEnabled(true);
+		
+		refreshButton.setToolTipText("Delete the cache directories");
+		
 		final JLabel label1 = new JLabel();
 		final JLabel label2 = new JLabel();
 
@@ -498,9 +506,6 @@ public class DiffView extends ViewPart {
 
 		final JList<String> funcJList1 = new JList<String>();
 		final JList<String> funcJList2 = new JList<String>();
-
-		button1.setEnabled(true);
-		button2.setEnabled(false);
 
 		funcJList1.setLayoutOrientation(JList.VERTICAL);
 		funcJList2.setLayoutOrientation(JList.VERTICAL);
@@ -555,6 +560,20 @@ public class DiffView extends ViewPart {
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
+				}
+			}
+		});
+		
+		refreshButton.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					FileUtils.cleanDirectory(new File(functionCacheDir));
+					FileUtils.cleanDirectory(new File(assemblyCacheDir));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		});
@@ -623,9 +642,18 @@ public class DiffView extends ViewPart {
 		c.gridy = 0;
 
 		frame.add(button1, c);
-		c.gridx = 1;
-		frame.add(button2, c);
 
+		c.gridx = 1;
+		JPanel refreshPanel = new JPanel(new GridBagLayout());
+		GridBagConstraints c2 = new GridBagConstraints();
+		c2.fill = GridBagConstraints.HORIZONTAL;
+		c2.weightx = 1;
+		refreshPanel.add(button2, c2);
+		c2.weightx = 0;
+		refreshPanel.add(refreshButton, c2);
+
+		frame.add(refreshPanel, c);
+		
 		c.gridy = 1;
 		c.gridx = 0;
 		frame.add(label1, c);
