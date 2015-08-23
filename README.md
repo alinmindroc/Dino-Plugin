@@ -55,15 +55,15 @@ Copy the .jar file in the dropins folder of the eclipse instalation. This is
 usually in ```/usr/share/eclipse```, or in the same folder as the eclipse executable
 if you haven't installed eclipse and just start the executable from a directory.
 
-**Installing the binary dependencies**:
+**Installing the binary dependencies**:  
 -install the dyninst suite (instructions here for Debian based:
-https://github.com/alinmindroc/dyninst_parser_GSOC)
+https://github.com/alinmindroc/dyninst_parser_GSOC)  
 -run the complex script ```./install.sh```, which should create the three executables
 in ```/opt/dino``` (g++ >= 4.7 needed)
 
-**Using the plugin**:
+**Using the plugin**:  
 Open eclipse, go to window->show view->other...->Dino Category and select the
-Diff View and the Source View.
+Diff View and the Source View.  
 If the Dino Category doesn't appear, try restarting eclipse from a
 console with the -clean argument.
 
