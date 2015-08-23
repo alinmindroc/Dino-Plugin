@@ -39,7 +39,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 public class SourceView extends ViewPart {
-	public static String lineParserPath = "/tmp/dino/line_parser";
+	public static String lineParserPath = "/opt/dino/line_parser";
 	private List<Color> colorArray = new ArrayList<Color>();
 	private AssemblyLine[] assemblyData;
 	private String[] sourceCodeData;

@@ -47,8 +47,8 @@ import difflib.DiffRowGenerator;
 public class DiffView extends ViewPart {
 	public static String functionCacheDir = "/tmp/dino/cached-functions/";
 	public static String assemblyCacheDir = "/tmp/dino/cached-assembly/";
-	public static String assemblyParserPath = "/tmp/dino/assembly_parser";
-	public static String functionParserPath = "/tmp/dino/function_parser";
+	public static String assemblyParserPath = "/opt/dino/assembly_parser";
+	public static String functionParserPath = "/opt/dino/function_parser";
 
 	/**
 	 * check if the file received as parameter was already parsed and its
@@ -60,6 +60,9 @@ public class DiffView extends ViewPart {
 	public static Boolean isFunctionCached(String fileName) {
 		File cacheDir = new File(functionCacheDir);
 		String[] cachedBinaries = cacheDir.list();
+
+		if (!cacheDir.exists())
+			cacheDir.mkdirs();
 
 		if (cachedBinaries == null)
 			return false;
@@ -82,6 +85,9 @@ public class DiffView extends ViewPart {
 	public static Boolean isAssemblyCached(String fileName) {
 		File cacheDir = new File(assemblyCacheDir);
 		String[] cachedBinaries = cacheDir.list();
+
+		if (!cacheDir.exists())
+			cacheDir.mkdirs();
 
 		if (cachedBinaries == null)
 			return false;
@@ -494,7 +500,8 @@ public class DiffView extends ViewPart {
 		button2.setEnabled(false);
 		refreshButton.setEnabled(true);
 
-		refreshButton.setToolTipText("Empty the cache directories and clear the current data");
+		refreshButton
+				.setToolTipText("Empty the cache directories and clear the current data");
 
 		final JLabel label1 = new JLabel();
 		final JLabel label2 = new JLabel();
@@ -581,7 +588,7 @@ public class DiffView extends ViewPart {
 
 					label1.setText("");
 					label2.setText("");
-					
+
 					button2.setEnabled(false);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
