@@ -59,7 +59,7 @@ if you haven't installed eclipse and just start the executable from a directory.
 -install the dyninst suite (instructions here for Debian based:
 https://github.com/alinmindroc/dyninst_parser_GSOC)
 -run the complex script ```./install.sh```, which should create the three executables
-in ```/tmp/dino``` (g++ >= 4.7 needed)
+in ```/opt/dino``` (g++ >= 4.7 needed)
 
 **Using the plugin**:
 Open eclipse, go to window->show view->other...->Dino Category and select the
@@ -72,8 +72,6 @@ console with the -clean argument.
 The main reason for this is some nitty-gritty behaviour of JNI that caches big data structures and, as a result of
 this, there was no possibility of changing an executable and reloading it into the plugin; it would have shown the
 same result.
-* The ```/tmp/dino``` directory used for storing the executables and cached results is not the best chosen, as it
-is cleared at every machine startup.
 * Possible improvements would be:
   * Adding sorting and search functionality in the function table
   * Show functions in a tree-like structure in the diff view, with callee functions branching from callers.
