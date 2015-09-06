@@ -1,4 +1,4 @@
-package dinopluginv2.views;
+package dinoplugin.views;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -8,17 +8,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -32,6 +26,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;
@@ -43,13 +40,26 @@ import com.google.gson.reflect.TypeToken;
 
 import difflib.DiffRow;
 import difflib.DiffRowGenerator;
+import dino_plugin.Activator;
+import dinoplugin.handlers.PreferencesHandler;
 
 public class DiffView extends ViewPart {
 	public static String functionCacheDir = "/tmp/dino/cached-functions/";
 	public static String assemblyCacheDir = "/tmp/dino/cached-assembly/";
-	public static String assemblyParserPath = "/opt/dino/assembly_parser";
-	public static String functionParserPath = "/opt/dino/function_parser";
+	
+	public String parserDirPath = null;
+	public String assemblyParserPath = null;
+	public String functionParserPath = null;
 
+	private void setBinaryDirPathFromPrefs(){
+		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+
+		parserDirPath = store.getString(PreferencesHandler.PREFS_DIR_KEY);
+		
+		assemblyParserPath = parserDirPath + "/assembly_parser";
+		functionParserPath = parserDirPath + "/function_parser";
+	}
+	
 	/**
 	 * check if the file received as parameter was already parsed and its
 	 * functions are cached
@@ -109,11 +119,11 @@ public class DiffView extends ViewPart {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String getAssemblyParsedData(File file) throws IOException {
+	public String getAssemblyParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
+		setBinaryDirPathFromPrefs();
 
 		if (isAssemblyCached(file.getName()) == false) {
-
 			String[] commands = new String[3];
 			commands[0] = assemblyParserPath;
 			commands[1] = file.getAbsolutePath();
@@ -125,7 +135,7 @@ public class DiffView extends ViewPart {
 				p.waitFor();
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(null,
-						"Could not invoke parser at " + assemblyParserPath);
+						"Could not invoke parser at " + assemblyParserPath + ". Make sure you have set the executable directory path corectly");
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -161,11 +171,13 @@ public class DiffView extends ViewPart {
 	 * @param file
 	 * @return
 	 */
-	public static String[] getFunctionsParsedData(File file) throws IOException {
+	public String[] getFunctionsParsedData(File file) throws IOException {
 		checkAndCreateCacheDirs();
-
+		setBinaryDirPathFromPrefs();
+		
 		// if the functions are not cached, parse them and save them to cache
 		if (isFunctionCached(file.getName()) == false) {
+			
 			String[] commands = new String[3];
 			commands[0] = functionParserPath;
 			commands[1] = file.getAbsolutePath();
@@ -177,7 +189,7 @@ public class DiffView extends ViewPart {
 				p.waitFor();
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(null,
-						"Could not invoke parser at " + functionParserPath);
+						"Could not invoke parser at " + functionParserPath + ". Make sure you have set the executable directory path corectly");
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -248,9 +260,6 @@ public class DiffView extends ViewPart {
 
 		public int index1, index2;
 	}
-
-	private String selectedFunction1 = null;
-	private String selectedFunction2 = null;
 
 	private File selectedFile1 = null;
 	private File selectedFile2 = null;
@@ -438,7 +447,7 @@ public class DiffView extends ViewPart {
 		listDiff2.setListData(getDiffData(code1, code2));
 	}
 
-	private void getAssemblyData() {
+	private void setAssemblyLists() {
 		try {
 			Gson gson = new Gson();
 			java.lang.reflect.Type stringStringMap = new TypeToken<List<Map<String, String>>>() {
@@ -534,10 +543,7 @@ public class DiffView extends ViewPart {
 							funcJList1.setListData(data);
 							label1.setText(selectedFile1.getAbsolutePath());
 							button2.setEnabled(true);
-							getAssemblyData();
-						} else {
-							JOptionPane.showMessageDialog(null,
-									getFunctionsRawJson(selectedFile1));
+							setAssemblyLists();
 						}
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
@@ -560,10 +566,7 @@ public class DiffView extends ViewPart {
 						if (data != null) {
 							funcJList2.setListData(data);
 							label2.setText(selectedFile2.getAbsolutePath());
-							getAssemblyData();
-						} else {
-							JOptionPane.showMessageDialog(null,
-									getFunctionsRawJson(selectedFile2));
+							setAssemblyLists();
 						}
 					} catch (IOException e1) {
 						e1.printStackTrace();

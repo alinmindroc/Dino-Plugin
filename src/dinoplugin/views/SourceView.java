@@ -1,4 +1,4 @@
-package dinopluginv2.views;
+package dinoplugin.views;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -29,6 +28,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.widgets.Composite;
@@ -38,12 +40,23 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
+import dino_plugin.Activator;
+import dinoplugin.handlers.PreferencesHandler;
+
 public class SourceView extends ViewPart {
-	public static String lineParserPath = "/opt/dino/line_parser";
+	public String parserDirPath = null;
+	public String lineParserPath = parserDirPath + "line_parser";
+
 	private List<Color> colorArray = new ArrayList<Color>();
 	private AssemblyLine[] assemblyData;
 	private String[] sourceCodeData;
-	private ArrayList<Integer> assemblySelectedIndices = new ArrayList<>();
+
+	private void setBinaryDirPathFromPrefs() {
+		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+
+		parserDirPath = store.getString(PreferencesHandler.PREFS_DIR_KEY);
+		lineParserPath = parserDirPath + "/line_parser";
+	}
 
 	class AssemblyLine {
 		public String content;
@@ -65,6 +78,7 @@ public class SourceView extends ViewPart {
 	 * @return
 	 */
 	public String getAssemblyJson(String binaryPath, String sourcePath) {
+		setBinaryDirPathFromPrefs();
 
 		String[] commands = new String[3];
 		commands[0] = lineParserPath;
@@ -75,8 +89,12 @@ public class SourceView extends ViewPart {
 		try {
 			p = Runtime.getRuntime().exec(commands);
 		} catch (IOException e1) {
-			JOptionPane.showMessageDialog(null, "Could not invoke parser at "
-					+ lineParserPath);
+			JOptionPane
+					.showMessageDialog(
+							null,
+							"Could not invoke parser at "
+									+ lineParserPath
+									+ ". Make sure you have set the executable directory path corectly");
 			e1.printStackTrace();
 		}
 
@@ -99,7 +117,8 @@ public class SourceView extends ViewPart {
 	/**
 	 * 
 	 * Get the assembly code corresponding to the module with the name of the
-	 * source file in the executable from binaryPath as an array of AssemblyLines
+	 * source file in the executable from binaryPath as an array of
+	 * AssemblyLines
 	 * 
 	 * @param binaryPath
 	 * @param sourcePath
@@ -185,6 +204,7 @@ public class SourceView extends ViewPart {
 					}
 				}
 			}
+
 			row = row.replaceAll("\t", "    ");
 			if (row.length() == 0)
 				row = " ";
@@ -216,7 +236,7 @@ public class SourceView extends ViewPart {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * This is a callback that will allow us to create the viewer and initialize
 	 * it.

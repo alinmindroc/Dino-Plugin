@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
    <extension
          point="org.eclipse.ui.views">
       <category
-            name="Assembly Analysis"
-            id="assembly-analysis">
+            name="Dino Category"
+            id="dino-plugin">
       </category>
       <view
             name="Diff View"
             icon="icons/sample.gif"
-            category="assembly-analysis"
+            category="dino-plugin"
             class="dinoplugin.views.DiffView"
             id="dinoplugin.views.DiffView">
       </view>
       <view
             name="Source View"
             icon="icons/sample.gif"
-            category="assembly-analysis"
+            category="dino-plugin"
             class="dinoplugin.views.SourceView"
             id="dinoplugin.views.SourceView">
       </view>
    </extension>
+   
    <extension
          point="org.eclipse.ui.perspectiveExtensions">
       <perspectiveExtension
@@ -41,11 +41,114 @@
          </view>
       </perspectiveExtension>
    </extension>
+   
    <extension
          point="org.eclipse.help.contexts">
       <contexts
             file="contexts.xml">
       </contexts>
    </extension>
-
+   
+     <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="Dino Category"
+            id="dino-plugin.commands.category">
+      </category>
+      <command
+            name="Dino"
+            categoryId="dino-plugin.commands.category"
+            id="dino-plugin.commands.helpCommand">
+            <commandParameter id="dino-plugin.commands.msg" name="Message" optional="true">
+            </commandParameter>
+      </command>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="dino-plugin.commands.helpCommand"
+            class="dinoplugin.handlers.HelpHandler">
+      </handler>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="dino-plugin.commands.helpCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+  
+   <extension point="org.eclipse.ui.commands">
+     <command categoryId="dino-plugin.commands.category"  
+              id="dino-plugin.commands.sourceCommand" name="Drop">
+     </command>
+  </extension>
+  
+	<extension point="org.eclipse.ui.commands">
+     <command categoryId="dino-plugin.commands.category"  
+              id="dino-plugin.commands.diffCommand" name="Drop">
+     </command>
+  </extension>
+  
+    <extension point="org.eclipse.ui.commands">
+     <command categoryId="dino-plugin.commands.category"  
+              id="dino-plugin.commands.selectDirCommand" name="Drop">
+     </command>
+  </extension>
+  
+  <extension point="org.eclipse.ui.commands">
+     <command categoryId="dino-plugin.commands.category"  
+              id="dino-plugin.commands.helpCommand" name="Drop">
+     </command>
+  </extension>
+  
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar id="dino-plugin.toolbars.sampleToolbar">
+            <command
+                  commandId="dino-plugin.commands.helpCommand"
+                  icon="icons/dino.gif"
+                  tooltip="Dino"
+                  id="dino-plugin.commands.helpCommand.dino-plugin"
+                  style="pulldown">
+            </command>
+         </toolbar>
+      </menuContribution>
+      
+      <menuContribution locationURI="menu:dino-plugin.commands.helpCommand.dino-plugin">
+        <command commandId="dino-plugin.commands.sourceCommand" label="Show Source View"></command>
+        <command commandId="dino-plugin.commands.diffCommand" label="Show Diff View"></command>
+        <command commandId="dino-plugin.commands.selectDirCommand" label="Select binary directory"></command>
+		<command commandId="dino-plugin.commands.helpCommand" label="Help"></command>
+     </menuContribution>     
+   </extension>
+      
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="dino-plugin.commands.sourceCommand"
+            class="dinoplugin.handlers.SourceHandler">
+      </handler>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="dino-plugin.commands.diffCommand"
+            class="dinoplugin.handlers.DiffHandler">
+      </handler>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            commandId="dino-plugin.commands.selectDirCommand"
+            class="dinoplugin.handlers.PreferencesHandler">
+      </handler>
+   </extension>
 </plugin>
