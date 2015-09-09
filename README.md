@@ -52,18 +52,18 @@ To create a new **eclipse plugin project**:
 
 ####How to install: 
 
-Copy the .jar file in the dropins folder of the eclipse instalation. This is
+Unzip dino-installer.zip and copy the .jar file in the dropins folder of the eclipse instalation. This is
 usually in ```/usr/share/eclipse```, or in the same folder as the eclipse executable
 if you haven't installed eclipse and just start the executable from a directory.
 
 **Installing the binary dependencies**:  
 -install the dyninst suite (instructions here for Debian based:
 https://github.com/alinmindroc/dyninst_parser_GSOC)  
--run the complex script ```./install.sh```, which should create the three executables
-in ```/opt/dino``` (g++ >= 4.7 needed)
+-run ```./install.sh```, specify an install directory for the C++ parsers and use the same directory when first starting the plugin from Eclipse (g++ >= 4.7 needed)
 
 **Using the plugin**:  
-Open eclipse, go to window->show view->other...->Dino Category and select the
+A dino icon should appear in the Eclipse toolbar. Click the dropdown arrow for options.  
+Alternatively, go to window->show view->other...->Dino Category and select the
 Diff View and the Source View.  
 If the Dino Category doesn't appear, try restarting eclipse from a
 console with the -clean argument.
@@ -79,7 +79,7 @@ same result.
   * Inside the C++ files: don't create JSON content manually, instead save the results in an array and then output it 
 using a JSON serializer 
   * Use JNI in order to call Dyninst methods. Current solution with stand-alone executables can fail if the directory containing the executables is removed (requires re-compiling). Also, feels kinda hackish.
-  * Contribute to Dyninst; some features which would have been nice for this project would have been:
+  * Contribute to Dyninst; some features which would have been nice for this project:
     * platform-independent parsing (i.e. right now you have to recompile the whole Dyninst library in order to parse Windows executables on Linux)
     * support for AVX instructions
     * better documentation
