@@ -50,7 +50,8 @@ To create a new **eclipse plugin project**:
 * Add a new view in plugin.xml and add the code for the source view
 * Export plugin from File > Export... > Plug-in Development > Deployable plug-ins and fragments
 
-**Installing the eclipse plugin**:  
+####How to install: 
+
 Copy the .jar file in the dropins folder of the eclipse instalation. This is
 usually in ```/usr/share/eclipse```, or in the same folder as the eclipse executable
 if you haven't installed eclipse and just start the executable from a directory.
