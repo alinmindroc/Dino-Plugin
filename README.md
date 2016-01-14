@@ -84,5 +84,7 @@ using a JSON serializer
     * support for AVX instructions
     * better documentation
 
-
+Screenshots:  
+<img src="screenshots/diff_view.png" width="45%"/>
+<img src="screenshots/source_view_1.png" width="45%"/>
 
